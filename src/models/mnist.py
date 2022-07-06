@@ -6,11 +6,10 @@ class MNIST1(nn.Module):
     def __init__(self) -> None:
         super(MNIST1, self).__init__()
         self.fc = nn.Linear(28 * 28, 10)
-        self.softmax = nn.Softmax(dim=0)
 
     def forward(self, x):
-        x = x.view(-1,28*28)
-        x = self.softmax(self.fc(x))
+        x = torch.flatten(x,start_dim=1)
+        x = self.fc(x)
         return x
 
 
@@ -21,12 +20,11 @@ class MNIST2(nn.Module):
         super(MNIST2, self).__init__()
         self.fc1 = nn.Linear(28 * 28, 100)
         self.fc2 = nn.Linear(100, 10)
-        self.softmax = nn.Softmax(dim=0)
 
     def forward(self, x):
-        x = x.view(-1,28*28)
+        x = torch.flatten(x,start_dim=1)
         x = torch.tanh(self.fc1(x))
-        x = self.softmax(self.fc2(x))
+        x = self.fc2(x)
         return x
 
 
@@ -37,12 +35,11 @@ class MNIST3(nn.Module):
         super(MNIST3, self).__init__()
         self.fc1 = nn.Linear(28 * 28, 100)
         self.fc2 = nn.Linear(100, 10)
-        self.softmax = nn.Softmax(dim=0)
 
     def forward(self, x):
-        x = x.view(-1,28*28)
+        x = torch.flatten(x,start_dim=1)
         x = F.relu(self.fc1(x))
-        x = self.softmax(self.fc2(x))
+        x = self.fc2(x)
         return x
 
 

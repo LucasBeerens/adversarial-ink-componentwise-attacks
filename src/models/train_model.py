@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 def train_model(net, dataloader, epochs, lr=0.001):
+    net.train()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=lr)
     for epoch in range(epochs):
