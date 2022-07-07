@@ -1,38 +1,41 @@
-from tkinter.tix import Tree
 import torch
 import cvxpy as cp
 import numpy as np
 import utils.scaleAttack as scale
 
-def attack(net,img,cl):
-    with torch.no_grad():
-        net.eval()
-        output = net(img).numpy().transpose()
-        classCount = output.size
-        imgLen = img.nelement()
+class Al0:
+    def __init__(self) -> None:
+        pass
 
-        jac = torch.autograd.functional.jacobian(net,img)
-        jac = jac.view(classCount, imgLen)
-        pi = jac.pinverse().numpy()
+    def attack(self,net,img,cl):
+        with torch.no_grad():
+            net.eval()
+            output = net(img).numpy().transpose()
+            classCount = output.size
+            imgLen = img.nelement()
 
-        jac = jac.numpy()
+            jac = torch.autograd.functional.jacobian(net,img)
+            jac = jac.view(classCount, imgLen)
+            pi = jac.pinverse().numpy()
 
-    c1 = pi
-    k1 = pi @ output
+            jac = jac.numpy()
 
-    G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
-    c2 = np.eye(classCount) - G
-    k2 = np.zeros((classCount,1))
+        c1 = pi
+        k1 = pi @ output
 
-    y = cp.Variable((classCount,1))
-    obj = cp.Minimize(cp.sum_squares(c1 @ y - k1))
-    eqCons = [c2 @ y <= k2]
-    prob = cp.Problem(obj, eqCons)
-    prob.solve()
-    
-    val = y.value
+        G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
+        c2 = np.eye(classCount) - G
+        k2 = np.zeros((classCount,1))
 
-    dy = val - output
-    dx = pi @ dy
+        y = cp.Variable((classCount,1))
+        obj = cp.Minimize(cp.sum_squares(c1 @ y - k1))
+        eqCons = [c2 @ y <= k2]
+        prob = cp.Problem(obj, eqCons)
+        prob.solve()
+        
+        val = y.value
 
-    return scale.scale(net,img,dx,cl,20)
+        dy = val - output
+        dx = pi @ dy
+
+        return scale.scale(net,img,dx,cl,20)

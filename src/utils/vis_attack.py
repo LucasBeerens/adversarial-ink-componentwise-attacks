@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
+import torch
 
-def vis_attack(net, img, target, alg):
+def vis_attack(net, img, target, att):
+    newImg, eps = att.attack(net,img,target)
+    outputs = net(newImg)
+    _, predicted = torch.max(outputs.data,1)
+    print(predicted)
+    print(outputs)
     figure = plt.figure(figsize=(8, 8))
-    target = 3
-    newImg, eps = alg(net,img,target)
     figure.add_subplot(1, 2, 1)
     plt.axis("off")
     plt.imshow(img.squeeze(), cmap="gray")

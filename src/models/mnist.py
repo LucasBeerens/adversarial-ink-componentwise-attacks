@@ -63,6 +63,6 @@ class MNIST4(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        x = x.view(x.size(0), -1) # (batch, 32,7,7) -> (batch, 32*7*7)
+        x = torch.flatten(x,start_dim=1)
         x = self.out(x)
         return x

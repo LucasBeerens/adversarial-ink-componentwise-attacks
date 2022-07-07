@@ -12,9 +12,8 @@ def testloader(bs):
 
 def testSetCorrect(net, n):
     correct = []
-    set = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transforms.ToTensor())
     with torch.no_grad():
-        for i, data in enumerate(set):
+        for data in testloader(1):
             if len(correct) >= n:
                 break
             image, label = data
