@@ -10,7 +10,7 @@ class Al0():
         self.a = a
         self.disp = disp
 
-    def attack(self,net,img,cl):
+    def __call__(self,net,img,cl):
         n = self.n
         a = self.a
         with torch.no_grad():
@@ -75,4 +75,4 @@ class Al0():
             if self.disp:
                 plt.plot(epss)
                 plt.show()
-        return scale.scale(net,img,dx,cl,20)
+        return scale.specific(net,img,dx,cl,20)

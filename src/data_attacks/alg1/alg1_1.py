@@ -7,7 +7,7 @@ class Al0:
     def __init__(self) -> None:
         pass
 
-    def attack(self,net,img,cl):
+    def __call__(self,net,img,cl):
         with torch.no_grad():
             net.eval()
             output = net(img).numpy().transpose()
@@ -38,4 +38,4 @@ class Al0:
         dy = val - output
         dx = pi @ dy
 
-        return scale.scale(net,img,dx,cl,20,True)
+        return scale.specific(net,img,dx,cl,20,True)

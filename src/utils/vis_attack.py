@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 import torch
 
-def vis_attack(net, img, target, att):
-    newImg, eps = att.attack(net,img,target)
+def vis_attack(net, img, att, cl = None):
+    if cl is None:
+        newImg, eps = att(net,img)
+    else:
+        newImg, eps = att(net,img, cl)
     outputs = net(newImg)
     _, predicted = torch.max(outputs.data,1)
     print(predicted)
