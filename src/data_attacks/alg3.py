@@ -5,10 +5,11 @@ import utils.scaleAttack as scale
 import matplotlib.pyplot as plt
 
 class Al0():
-    def __init__(self,n=150,a=0.01,disp=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False):
         self.n = n
         self.a = a
         self.disp = disp
+        self.type = type
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -25,8 +26,18 @@ class Al0():
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
 
-            c1 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
-            k1 = np.zeros(1)
+            if self.type == 0:
+                c1 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
+                k1 = np.zeros(1)
+            elif self.type == 1:
+                c11 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
+                c12 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                c1 = np.vstack([c11,c12])
+                k1 = np.vstack([np.zeros(1),-diagIm@v/np.linalg.norm(imVec)])
+            elif self.type == 2:
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                k1 = -diagIm@v/np.linalg.norm(imVec)
+            
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
             c2 = np.hstack([np.zeros((classCount,1)),np.eye(classCount) - G,np.zeros((classCount,imgLen))])
@@ -63,7 +74,6 @@ class Al0():
                 dx = (diagIm @ v).numpy()
                 newImVec = np.reshape(img,(imgLen,1)) + dx
                 newImg = np.reshape(newImVec,img.shape).float()
-                #dx = (newImVec - np.reshape(img,(imgLen,1))).numpy()
                 if self.disp:
                     _, epss[i] = scale.specific(net,img,dx,cl,20)
                 
@@ -78,10 +88,11 @@ class Al0():
         return scale.specific(net,img,dx,cl,20)
 
 class Al1():
-    def __init__(self,n=150,a=0.01,disp=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False):
         self.n = n
         self.a = a
         self.disp = disp
+        self.type = type
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -98,15 +109,24 @@ class Al1():
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
 
-            c1 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
-            k1 = np.zeros(1)
+            if self.type == 0:
+                c1 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
+                k1 = np.zeros(1)
+            elif self.type == 1:
+                c11 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
+                c12 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                c1 = np.vstack([c11,c12])
+                k1 = np.vstack([np.zeros(1),-diagIm@v/np.linalg.norm(imVec)])
+            elif self.type == 2:
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                k1 = -diagIm@v/np.linalg.norm(imVec)
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
             c2 = np.hstack([np.zeros((classCount,1)),np.eye(classCount) - G,np.zeros((classCount,imgLen))])
             c21 = np.hstack([-np.ones((imgLen,1)),np.zeros((imgLen,classCount)),np.eye(imgLen)])
             c22 = np.hstack([-np.ones((imgLen,1)),np.zeros((imgLen,classCount)),-np.eye(imgLen)])
-            c23 = np.hstack([np.zeros((imgLen,classCount+1)),diagIm])
-            c24 = np.hstack([np.zeros((imgLen,classCount+1)),-diagIm])
+            c23 = np.hstack([np.zeros((imgLen,classCount+1)),a*diagIm])
+            c24 = np.hstack([np.zeros((imgLen,classCount+1)),-a*diagIm])
             c2 = np.vstack([c21,c22,c2,c23,c24])
             k2 = cp.Parameter((4*imgLen+classCount,1))
             
@@ -132,13 +152,11 @@ class Al1():
                 prob.solve(solver=cp.ECOS,ignore_dpp = True)
                 
                 val = z.value
-
                 dv = val[1+classCount:]
                 v += a * dv
                 dx = diagIm @ v
                 newImVec = np.reshape(img,(imgLen,1)) + dx
                 newImg = np.reshape(newImVec,img.shape).float()
-                #dx = (newImVec - np.reshape(img,(imgLen,1))).numpy()
                 if self.disp:
                     _, epss[i] = scale.specific(net,img,dx,cl,20)
                 
@@ -150,4 +168,4 @@ class Al1():
             if self.disp:
                 plt.plot(epss)
                 plt.show()
-        return scale.specific(net,img,dx,cl,20)
+        return scale.specific(net,img,dx,cl,20,clamp=True)

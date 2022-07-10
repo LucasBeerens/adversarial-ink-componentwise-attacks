@@ -140,4 +140,4 @@ class Al1():
             if self.disp:
                 plt.plot(epss)
                 plt.show()
-        return scale.specific(net,img,dx,cl,20)
+        return scale.specific(net,img,dx,cl,20,clamp=True)
