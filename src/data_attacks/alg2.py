@@ -69,3 +69,5 @@ class Al0():
                 plt.plot(epss)
                 plt.show()
         return scale.specific(net,img,dx,cl,20)
+
+
