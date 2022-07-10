@@ -3,13 +3,15 @@ import cvxpy as cp
 import numpy as np
 import utils.scaleAttack as scale
 import matplotlib.pyplot as plt
+from utils import jacobian
 
 class Al0():
-    def __init__(self,type=0,n=150,a=0.01,disp=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
+        self.num = num
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -58,8 +60,11 @@ class Al0():
             epss = np.zeros(n)
 
             for i in range(n):
-                jac = torch.autograd.functional.jacobian(net,newImg)
-                jac = jac.view(classCount, imgLen)
+                if not self.num:
+                    jac = torch.autograd.functional.jacobian(net,newImg)
+                    jac = jac.view(classCount, imgLen)
+                else:
+                    jac = jacobian.approx(net,newImg)
 
                 k2.value = np.vstack([-v,v,np.zeros((classCount,1))])
                 k3.value = output
@@ -88,11 +93,12 @@ class Al0():
         return scale.specific(net,img,dx,cl,20)
 
 class Al1():
-    def __init__(self,type=0,n=150,a=0.01,disp=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
+        self.num = num
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -142,8 +148,11 @@ class Al1():
             epss = np.zeros(n)
 
             for i in range(n):
-                jac = torch.autograd.functional.jacobian(net,newImg)
-                jac = jac.view(classCount, imgLen)
+                if not self.num:
+                    jac = torch.autograd.functional.jacobian(net,newImg)
+                    jac = jac.view(classCount, imgLen)
+                else:
+                    jac = jacobian.approx(net,newImg)
 
                 k2.value = np.vstack([-v,v,np.zeros((classCount,1)),np.ones((imgLen,1))-imVec-diagIm@v,imVec+diagIm@v])
                 k3.value = output

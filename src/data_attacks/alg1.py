@@ -2,9 +2,11 @@ import torch
 import cvxpy as cp
 import numpy as np
 import utils.scaleAttack as scale
+from utils import jacobian
 
 class Al0:
-    def __init__(self) -> None:
+    def __init__(self, num=False) -> None:
+        self.num = num
         pass
 
     def __call__(self,net,img,cl):
@@ -14,8 +16,11 @@ class Al0:
             classCount = output.size
             imgLen = img.nelement()
 
-            jac = torch.autograd.functional.jacobian(net,img)
-            jac = jac.view(classCount, imgLen)
+            if not self.num:
+                jac = torch.autograd.functional.jacobian(net,img)
+                jac = jac.view(classCount, imgLen)
+            else:
+                jac = jacobian.approx(net,img)
             pi = jac.pinverse().numpy()
 
             jac = jac.numpy()
@@ -41,7 +46,8 @@ class Al0:
         return scale.specific(net,img,dx,cl)
 
 class Al1:
-    def __init__(self) -> None:
+    def __init__(self,num=False) -> None:
+        self.num = num
         pass
 
     def __call__(self,net,img,cl):
@@ -51,8 +57,11 @@ class Al1:
             classCount = output.size
             imgLen = img.nelement()
 
-            jac = torch.autograd.functional.jacobian(net,img)
-            jac = jac.view(classCount, imgLen)
+            if not self.num:
+                jac = torch.autograd.functional.jacobian(net,img)
+                jac = jac.view(classCount, imgLen)
+            else:
+                jac = jacobian.approx(net,img)
             pi = jac.pinverse().numpy()
 
             jac = jac.numpy()
