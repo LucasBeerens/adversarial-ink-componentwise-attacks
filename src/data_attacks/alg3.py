@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 from utils import jacobian
 
 class Al0():
-    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False,tolerance=0):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
         self.num = num
+        self.tolerance=tolerance
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -23,7 +24,10 @@ class Al0():
             imgLen = img.nelement()
             newImg = img
             imVec = np.reshape(newImg,(imgLen,1))
-            diagIm = np.diagflat(np.abs(imVec))
+            if self.tolerance==0:
+                tol = np.diagflat(np.abs(imVec))
+            elif self.tolerance==1:
+                tol = torch.tensor(np.eye(imgLen)).float()
 
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
@@ -33,12 +37,12 @@ class Al0():
                 k1 = np.zeros(1)
             elif self.type == 1:
                 c11 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
-                c12 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                c12 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
                 c1 = np.vstack([c11,c12])
-                k1 = np.vstack([np.zeros(1),-diagIm@v/np.linalg.norm(imVec)])
+                k1 = np.vstack([np.zeros(1),-tol@v/np.linalg.norm(imVec)])
             elif self.type == 2:
-                c1 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
-                k1 = -diagIm@v/np.linalg.norm(imVec)
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
+                k1 = -tol@v/np.linalg.norm(imVec)
             
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
@@ -68,7 +72,7 @@ class Al0():
 
                 k2.value = np.vstack([-v,v,np.zeros((classCount,1))])
                 k3.value = output
-                c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@diagIm])
+                c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@tol])
 
                 prob.solve(solver=cp.ECOS)
                 
@@ -76,7 +80,7 @@ class Al0():
 
                 dv = val[1+classCount:]
                 v += a * dv
-                dx = (diagIm @ v).numpy()
+                dx = (tol @ v).numpy()
                 newImVec = np.reshape(img,(imgLen,1)) + dx
                 newImg = np.reshape(newImVec,img.shape).float()
                 if self.disp:
@@ -93,12 +97,13 @@ class Al0():
         return scale.specific(net,img,dx,cl,20)
 
 class Al1():
-    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False):
+    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False,tolerance=0):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
         self.num = num
+        self.tolerance=tolerance
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -110,7 +115,10 @@ class Al1():
             imgLen = img.nelement()
             newImg = img
             imVec = np.reshape(newImg,(imgLen,1)).numpy()
-            diagIm = np.diagflat(np.abs(imVec))
+            if self.tolerance==0:
+                tol = np.diagflat(np.abs(imVec))
+            elif self.tolerance==1:
+                tol = np.eye(imgLen)
 
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
@@ -120,19 +128,19 @@ class Al1():
                 k1 = np.zeros(1)
             elif self.type == 1:
                 c11 = np.hstack([np.ones((1,1)),np.zeros((1,classCount +  imgLen))])
-                c12 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
+                c12 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
                 c1 = np.vstack([c11,c12])
-                k1 = np.vstack([np.zeros(1),-diagIm@v/np.linalg.norm(imVec)])
+                k1 = np.vstack([np.zeros(1),-tol@v/np.linalg.norm(imVec)])
             elif self.type == 2:
-                c1 = np.hstack([np.zeros((imgLen, classCount+1)), diagIm / np.linalg.norm(imVec)])
-                k1 = -diagIm@v/np.linalg.norm(imVec)
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
+                k1 = -tol@v/np.linalg.norm(imVec)
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
             c2 = np.hstack([np.zeros((classCount,1)),np.eye(classCount) - G,np.zeros((classCount,imgLen))])
             c21 = np.hstack([-np.ones((imgLen,1)),np.zeros((imgLen,classCount)),np.eye(imgLen)])
             c22 = np.hstack([-np.ones((imgLen,1)),np.zeros((imgLen,classCount)),-np.eye(imgLen)])
-            c23 = np.hstack([np.zeros((imgLen,classCount+1)),a*diagIm])
-            c24 = np.hstack([np.zeros((imgLen,classCount+1)),-a*diagIm])
+            c23 = np.hstack([np.zeros((imgLen,classCount+1)),a*tol])
+            c24 = np.hstack([np.zeros((imgLen,classCount+1)),-a*tol])
             c2 = np.vstack([c21,c22,c2,c23,c24])
             k2 = cp.Parameter((4*imgLen+classCount,1))
             
@@ -154,16 +162,16 @@ class Al1():
                 else:
                     jac = jacobian.approx(net,newImg)
 
-                k2.value = np.vstack([-v,v,np.zeros((classCount,1)),np.ones((imgLen,1))-imVec-diagIm@v,imVec+diagIm@v])
+                k2.value = np.vstack([-v,v,np.zeros((classCount,1)),np.ones((imgLen,1))-imVec-tol@v,imVec+tol@v])
                 k3.value = output
-                c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@diagIm])
+                c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@tol])
 
                 prob.solve(solver=cp.ECOS,ignore_dpp = True)
                 
                 val = z.value
                 dv = val[1+classCount:]
                 v += a * dv
-                dx = diagIm @ v
+                dx = tol @ v
                 newImVec = np.reshape(img,(imgLen,1)) + dx
                 newImg = np.reshape(newImVec,img.shape).float()
                 if self.disp:
