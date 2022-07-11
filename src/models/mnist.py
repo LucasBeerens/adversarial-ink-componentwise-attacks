@@ -49,7 +49,7 @@ class MNIST4(nn.Module):
     def __init__(self) -> None:  
         super(MNIST4, self).__init__()  
         self.conv1 = nn.Sequential(  
-                     nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2),
+                     nn.Conv2d(1,16,5,1,2),
                      nn.ReLU(),
                      nn.MaxPool2d(kernel_size=2) # (16,14,14)
                      )

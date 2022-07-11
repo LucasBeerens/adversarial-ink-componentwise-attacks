@@ -166,7 +166,7 @@ class Al1():
                 k3.value = output
                 c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@tol])
 
-                prob.solve(solver=cp.ECOS,ignore_dpp = True)
+                prob.solve(ignore_dpp = True)
                 
                 val = z.value
                 dv = val[1+classCount:]
