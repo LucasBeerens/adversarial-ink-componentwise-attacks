@@ -16,4 +16,4 @@ def approx(net, img, eps = 1e-3):
             unitTensors[i,j,i,j] = 1
             new = (net(img + unitTensors[i,j,:,:].view(imShape) * eps) - output)/eps
             jac[i*imWidth + j,:] = new
-    return torch.transpose(torch.tensor(jac),0,1)
+    return torch.transpose(torch.tensor(jac),0,1).float()

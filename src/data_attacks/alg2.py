@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 from utils import jacobian
 
 class Al0():
-    def __init__(self,n=150,a=0.01,disp=False,num=False):
+    def __init__(self,n=30,a=0.1,disp=False,num=False,name=None):
         self.n = n
         self.a = a
         self.disp = disp
         self.num = num
+        self.name = name
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -72,16 +73,19 @@ class Al0():
                 output = output.numpy().transpose()
             if self.disp:
                 plt.plot(epss)
+                if not self.name is None:
+                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
                 plt.show()
-        return scale.specific(net,img,dx,cl,20)
+        return scale.specific(net,img,dx,cl,20,clamp=True)
 
 
 class Al1():
-    def __init__(self,n=150,a=0.01,disp=False,num=False):
+    def __init__(self,n=30,a=0.1,disp=False,num=False,name=None):
         self.n = n
         self.a = a
         self.disp = disp
         self.num = num
+        self.name = name
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -139,7 +143,7 @@ class Al1():
                 newImVec = imVec + a * delx
                 newImg = np.reshape(newImVec,img.shape).float()
                 if self.disp:
-                    _, epss[i] = scale.specific(net,img,dx,cl,20)
+                    _, epss[i] = scale.specific(net,img,dx,cl,20,True)
                 
                 output = net(newImg)
                 _, predicted = torch.max(output.data,1)
@@ -148,5 +152,7 @@ class Al1():
                 output = output.numpy().transpose()
             if self.disp:
                 plt.plot(epss)
+                if not self.name is None:
+                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
                 plt.show()
         return scale.specific(net,img,dx,cl,20,clamp=True)

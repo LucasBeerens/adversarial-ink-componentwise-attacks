@@ -16,4 +16,4 @@ class Att:
         delta = adv_image - img
         delta = torch.reshape(delta, (delta.nelement(),1)).numpy()
         eps = np.linalg.norm(delta) / np.linalg.norm(img)
-        return scale.any(net, img, delta)
+        return scale.any(net, img, delta, clamp=True)

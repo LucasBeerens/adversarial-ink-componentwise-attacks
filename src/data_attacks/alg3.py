@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 from utils import jacobian
 
 class Al0():
-    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False,tolerance=0):
+    def __init__(self,type=0,n=30,a=0.1,disp=False,num=False,tolerance=0,name=None):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
         self.num = num
         self.tolerance=tolerance
+        self.name = name
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -93,17 +94,20 @@ class Al0():
                 output = output.numpy().transpose()
             if self.disp:
                 plt.plot(epss)
+                if not self.name is None:
+                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
                 plt.show()
         return scale.specific(net,img,dx,cl,20)
 
 class Al1():
-    def __init__(self,type=0,n=150,a=0.01,disp=False,num=False,tolerance=0):
+    def __init__(self,type=0,n=30,a=0.1,disp=False,num=False,tolerance=0,name=None):
         self.n = n
         self.a = a
         self.disp = disp
         self.type = type
         self.num = num
         self.tolerance=tolerance
+        self.name = name
 
     def __call__(self,net,img,cl):
         n = self.n
@@ -166,7 +170,7 @@ class Al1():
                 k3.value = output
                 c3.value = np.hstack([np.zeros((classCount,1)),np.eye(classCount),-jac@tol])
 
-                prob.solve(ignore_dpp = True)
+                prob.solve(solver=cp.SCS,ignore_dpp = True)
                 
                 val = z.value
                 dv = val[1+classCount:]
@@ -175,7 +179,7 @@ class Al1():
                 newImVec = np.reshape(img,(imgLen,1)) + dx
                 newImg = np.reshape(newImVec,img.shape).float()
                 if self.disp:
-                    _, epss[i] = scale.specific(net,img,dx,cl,20)
+                    _, epss[i] = scale.specific(net,img,dx,cl,20,True)
                 
                 output = net(newImg)
                 _, predicted = torch.max(output.data,1)
@@ -184,5 +188,7 @@ class Al1():
                 output = output.numpy().transpose()
             if self.disp:
                 plt.plot(epss)
+                if not self.name is None:
+                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
                 plt.show()
         return scale.specific(net,img,dx,cl,20,clamp=True)
