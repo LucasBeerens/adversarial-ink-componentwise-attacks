@@ -4,6 +4,7 @@ import numpy as np
 import utils.scaleAttack as scale
 import matplotlib.pyplot as plt
 from utils import jacobian
+import seaborn as sns
 
 class Al0():
     def __init__(self,n=30,a=0.1,disp=False,num=False,name=None):
@@ -72,10 +73,7 @@ class Al0():
                     break
                 output = output.numpy().transpose()
             if self.disp:
-                plt.plot(epss)
-                if not self.name is None:
-                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
-                plt.show()
+                return epss
         return scale.specific(net,img,dx,cl,20,clamp=True)
 
 
@@ -87,7 +85,7 @@ class Al1():
         self.num = num
         self.name = name
 
-    def __call__(self,net,img,cl):
+    def __call__(self,net,img,cl,style='-',lw=3):
         n = self.n
         a = self.a
         with torch.no_grad():
@@ -135,7 +133,8 @@ class Al1():
                 prob.solve(ignore_dpp = True)
                 
                 val = z.value
-
+                if val is None:
+                    return img, 1
                 delx = val[:imgLen]
                 dx += a * delx
 
@@ -151,8 +150,5 @@ class Al1():
                     break
                 output = output.numpy().transpose()
             if self.disp:
-                plt.plot(epss)
-                if not self.name is None:
-                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
-                plt.show()
+                return epss
         return scale.specific(net,img,dx,cl,20,clamp=True)

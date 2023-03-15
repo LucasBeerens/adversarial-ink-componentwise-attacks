@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from data_attacks import attackAny
 
-def vis_attack(net, img, atts, targeted = True, cl = None, name=None):
+def vis_attack(net, img, atts, targeted = True, cl = None, name=None, inverted=False):
     net.eval()
     output = net(img)
     classCount = output.nelement()
@@ -44,10 +44,14 @@ def vis_attack(net, img, atts, targeted = True, cl = None, name=None):
     for i, im in enumerate(newImgs):
         ax = figure.add_subplot(len(atts), colCount, i+1)
         ax.title.set_text(round(epss[i],3))
+        outputs = net(im.reshape(img.shape))
+        _, predicted = torch.max(outputs.data,1)
         plt.axis("off")
+        if inverted:
+            im = torch.ones(28) - im
         plt.imshow(im, cmap=cmap)
 
     if not name is None:
-        plt.savefig('../results/{}.png'.format(name),bbox_inches='tight')
+        plt.savefig('../results2/{}.png'.format(name),bbox_inches='tight')
     
     plt.show()

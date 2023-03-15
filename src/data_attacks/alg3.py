@@ -4,6 +4,7 @@ import numpy as np
 import utils.scaleAttack as scale
 import matplotlib.pyplot as plt
 from utils import jacobian
+import torchvision.transforms as transforms
 
 class Al0():
     def __init__(self,type=0,n=30,a=0.1,disp=False,num=False,tolerance=0,name=None):
@@ -29,6 +30,10 @@ class Al0():
                 tol = np.diagflat(np.abs(imVec))
             elif self.tolerance==1:
                 tol = torch.tensor(np.eye(imgLen)).float()
+            elif self.tolerance==2:
+                blurrer = transforms.GaussianBlur(kernel_size=3,sigma=1)
+                tolIm = blurrer(img)
+                tol = np.diagflat(np.abs(tolIm))
 
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
@@ -44,6 +49,9 @@ class Al0():
             elif self.type == 2:
                 c1 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
                 k1 = -tol@v/np.linalg.norm(imVec)
+            elif self.type == 3:
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), np.eye(imgLen) / np.linalg.norm(imVec)])
+                k1 = -v/np.linalg.norm(imVec)
             
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
@@ -93,10 +101,7 @@ class Al0():
                     break
                 output = output.numpy().transpose()
             if self.disp:
-                plt.plot(epss)
-                if not self.name is None:
-                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
-                plt.show()
+                return epss
         return scale.specific(net,img,dx,cl,20)
 
 class Al1():
@@ -109,7 +114,7 @@ class Al1():
         self.tolerance=tolerance
         self.name = name
 
-    def __call__(self,net,img,cl):
+    def __call__(self,net,img,cl,style='-',lw=3):
         n = self.n
         a = self.a
         with torch.no_grad():
@@ -123,6 +128,10 @@ class Al1():
                 tol = np.diagflat(np.abs(imVec))
             elif self.tolerance==1:
                 tol = np.eye(imgLen)
+            elif self.tolerance==2:
+                blurrer = transforms.GaussianBlur(kernel_size=3,sigma=1)
+                tolIm = np.array(blurrer(img))
+                tol = np.diagflat(np.abs(tolIm))
 
             v = np.zeros((imgLen,1))
             dx = np.zeros((imgLen,1))
@@ -138,6 +147,9 @@ class Al1():
             elif self.type == 2:
                 c1 = np.hstack([np.zeros((imgLen, classCount+1)), tol / np.linalg.norm(imVec)])
                 k1 = -tol@v/np.linalg.norm(imVec)
+            elif self.type == 3:
+                c1 = np.hstack([np.zeros((imgLen, classCount+1)), np.eye(imgLen) / np.linalg.norm(imVec)])
+                k1 = -v/np.linalg.norm(imVec)
             
             G = np.array([[int(j==cl) for j in range(classCount)] for _ in range(classCount)])
             c2 = np.hstack([np.zeros((classCount,1)),np.eye(classCount) - G,np.zeros((classCount,imgLen))])
@@ -173,6 +185,9 @@ class Al1():
                 prob.solve(solver=cp.SCS,ignore_dpp = True)
                 
                 val = z.value
+                if val is None:
+                    return img, 1
+
                 dv = val[1+classCount:]
                 v += a * dv
                 dx = tol @ v
@@ -187,8 +202,5 @@ class Al1():
                     break
                 output = output.numpy().transpose()
             if self.disp:
-                plt.plot(epss)
-                if not self.name is None:
-                    plt.savefig('../results/{}.png'.format(self.name),bbox_inches='tight')
-                plt.show()
+                return epss
         return scale.specific(net,img,dx,cl,20,clamp=True)

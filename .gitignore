@@ -3,3 +3,6 @@ data/
 __pycache__/
 .ipynb_checkpoints
 results/
+results2/
+resultsNumpy/
+resultsFinal/
