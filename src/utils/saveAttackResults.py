@@ -15,7 +15,7 @@ def specific(net, data, att, name):
         resultsImg[i] = label
         for c in range(outputSize-1):
             target = c + (c >= label)
-            resultsImg[i,c,:,:], resultsEps[i, c] = att(net, img, target)
+            resultsImg[i, c, :, :], resultsEps[i, c] = att(net, img, target)
 
     np.save('../resultsNumpy/{}_epss.npy'.format(name), resultsEps)
     np.save('../resultsNumpy/{}_imgs'.format(name), resultsImg)
