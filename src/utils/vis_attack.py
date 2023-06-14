@@ -4,12 +4,26 @@ import numpy as np
 
 
 def vis_attack(net, img, atts, targeted=True, cl=None, name=None, inverted=False):
+    """
+    Visualize the results of attacks on a single image using different attack algorithms.
+
+    Args:
+    - net: The neural network model.
+    - img: The input image.
+    - atts: List of attack algorithms to visualize.
+    - targeted: Whether the attack is targeted or untargeted.
+    - cl: The target class for targeted attacks.
+    - name: Name parameter.
+    - inverted: Whether to invert the colors of the images (grayscale).
+    """
+
     net.eval()
     output = net(img)
     classCount = output.nelement()
     newImgs = []
     epss = []
 
+    # Compute attacks
     for att in atts:
         if cl is None and not targeted:
             im, eps = att(net, img)
@@ -30,6 +44,7 @@ def vis_attack(net, img, atts, targeted=True, cl=None, name=None, inverted=False
         else:
             raise Exception('Options are not compatible')
 
+    # Reshape resulting images
     if img.shape[1] == 1:
         cmap = 'gray'
         for i in range(len(newImgs)):
@@ -39,7 +54,8 @@ def vis_attack(net, img, atts, targeted=True, cl=None, name=None, inverted=False
         for i in range(len(newImgs)):
             newImgs[i] = np.transpose(newImgs[i].squeeze().numpy(), (1, 2, 0))
 
-    figure = plt.figure(figsize=(colCount * 2, len(atts)*2))
+    # Create figure and save it
+    figure = plt.figure(figsize=(colCount * 2, len(atts) * 2))
     for i, im in enumerate(newImgs):
         ax = figure.add_subplot(len(atts), colCount, i+1)
         ax.title.set_text(round(epss[i], 3))
