@@ -67,6 +67,6 @@ def vis_attack(net, img, atts, targeted=True, cl=None, name=None, inverted=False
         plt.imshow(im, cmap=cmap)
 
     if name is not None:
-        plt.savefig('../results2/{}.png'.format(name), bbox_inches='tight')
+        plt.savefig('../resultsFinal/{}.png'.format(name), bbox_inches='tight')
 
     plt.show()
